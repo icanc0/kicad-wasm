@@ -91,6 +91,17 @@ public:
     bool ControlDown() const{ return false; }
 };
 
+class wxSizeEvent : public wxEvent {
+public:
+    int  GetSizeX() const { return 0; }
+    int  GetSizeY() const { return 0; }
+};
+
+class wxPaintEvent : public wxEvent {};
+class wxMoveEvent  : public wxEvent {};
+class wxShowEvent  : public wxEvent { public: bool IsShown() const { return false; } };
+class wxFocusEvent : public wxEvent {};
+
 #define wxDECLARE_EVENT(name, evtcls)  extern const wxEventType name
 #define wxDEFINE_EVENT(name, evtcls)   const wxEventType name = 0
 
