@@ -204,6 +204,49 @@ public:
 
     // fn_str for older API — return the raw C string.
     const char* fn_str() const { return m_s.c_str(); }
+
+    // More KiCad-common methods.
+    const char* GetData() const { return m_s.c_str(); }
+
+    wxString Strip(int mode = 1) const {   // 1=trailing, 2=leading, 3=both
+        std::string r = m_s;
+        if (mode & 2) r.erase(0, r.find_first_not_of(" \t\r\n"));
+        if (mode & 1) {
+            auto p = r.find_last_not_of(" \t\r\n");
+            r.erase(p == std::string::npos ? 0 : p + 1);
+        }
+        return wxString(std::move(r));
+    }
+    wxString Trim(bool fromRight = true) const {
+        return fromRight ? Strip(1) : Strip(2);
+    }
+
+    template<typename... Args>
+    int Printf(const char* fmt, Args&&... args) {
+        *this = Format(fmt, std::forward<Args>(args)...);
+        return static_cast<int>(m_s.size());
+    }
+
+    // wxString::Find returns int (wx_NPOS if not found) or size_t depending
+    // on overload; give npos-compatible size_t for callers we've seen.
+    size_t Find(char c) const {
+        auto p = m_s.find(c);
+        return p == std::string::npos ? npos : p;
+    }
+    size_t Find(const wxString& s) const { return m_s.find(s.m_s); }
+
+    // Real wxWidgets Replace returns the number of replacements made.
+    int Replace(const wxString& from, const wxString& to, bool all = true) {
+        int count = 0;
+        size_t pos = 0;
+        while ((pos = m_s.find(from.m_s, pos)) != std::string::npos) {
+            m_s.replace(pos, from.m_s.size(), to.m_s);
+            pos += to.m_s.size();
+            ++count;
+            if (!all) break;
+        }
+        return count;
+    }
 };
 
 inline wxString operator+(const wxString& a, const wxString& b) {
