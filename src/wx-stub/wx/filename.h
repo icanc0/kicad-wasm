@@ -3,6 +3,7 @@
 // just what the compiled KiCad WASM subset actually calls.
 #pragma once
 #include "wx/string.h"
+#include "wx/filefn.h"     // real wxWidgets pulls this in transitively
 #include <filesystem>
 
 class wxFileName {
@@ -41,10 +42,18 @@ public:
         return std::filesystem::exists(m_path, ec) &&
                std::filesystem::is_regular_file(m_path, ec);
     }
+    static bool FileExists(const wxString& p) {
+        std::error_code ec;
+        return std::filesystem::is_regular_file(p.ToStdString(), ec);
+    }
     bool DirExists() const {
         std::error_code ec;
         return std::filesystem::exists(m_path, ec) &&
                std::filesystem::is_directory(m_path, ec);
+    }
+    static bool DirExists(const wxString& p) {
+        std::error_code ec;
+        return std::filesystem::is_directory(p.ToStdString(), ec);
     }
     bool Mkdir(int = 0777, int = 0) const {
         std::error_code ec;
