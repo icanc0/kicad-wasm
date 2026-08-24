@@ -69,5 +69,5 @@ public:
     bool operator!=(const wxFileName& r) const { return m_path != r.m_path; }
 };
 
-// wxPATH_MKDIR_FULL etc.
-enum { wxPATH_MKDIR_FULL = 1, wxS_DIR_DEFAULT = 0777 };
+// wxPATH_MKDIR_FULL etc.  (wxS_DIR_DEFAULT is defined in wx/filefn.h)
+enum { wxPATH_MKDIR_FULL = 1 };

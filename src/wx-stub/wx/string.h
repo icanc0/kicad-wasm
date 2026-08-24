@@ -208,10 +208,13 @@ public:
     // More KiCad-common methods.
     const char* GetData() const { return m_s.c_str(); }
 
-    wxString Strip(int mode = 1) const {   // 1=trailing, 2=leading, 3=both
+    // Real wxWidgets: enum stripType { leading = 1, trailing = 2, both = 3 };
+    // Accept int (default 2 = trailing) so pre-C++11 KiCad callers work.
+    enum stripType { leading = 1, trailing = 2, both = 3 };
+    wxString Strip(int mode = trailing) const {
         std::string r = m_s;
-        if (mode & 2) r.erase(0, r.find_first_not_of(" \t\r\n"));
-        if (mode & 1) {
+        if (mode & leading)  r.erase(0, r.find_first_not_of(" \t\r\n"));
+        if (mode & trailing) {
             auto p = r.find_last_not_of(" \t\r\n");
             r.erase(p == std::string::npos ? 0 : p + 1);
         }
