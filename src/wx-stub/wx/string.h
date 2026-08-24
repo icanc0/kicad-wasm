@@ -98,6 +98,9 @@ public:
     // Convert to const char* implicitly — KiCad code passes wxString to
     // API expecting a plain C string.
     operator const char*() const { return m_s.c_str(); }
+    // Real wxWidgets returns a wxScopedCharBuffer from utf8_string();
+    // approximate with std::string. Used in KiCad's newer code paths.
+    std::string utf8_string() const { return m_s; }
 
     // Trivial to-number.
     bool ToCDouble(double* out) const {
