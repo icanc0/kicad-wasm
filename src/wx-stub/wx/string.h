@@ -10,9 +10,9 @@
 #include <string_view>
 #include <utility>
 
-// wxT / wxS: just pass through the literal.
-#define wxT(x)  x
-#define wxS(x)  x
+#include "wx/defs.h"
+
+#undef wxASCII_STR
 #define wxASCII_STR(x) wxString(x)
 
 class wxString {
@@ -40,8 +40,20 @@ public:
         return wxString(std::string(s, n));
     }
 
-    // Printf-style Format.
-    static wxString Format(const char* fmt, ...) {
+private:
+    // Auto-convert wxString args to const char* for printf-family calls,
+    // pass everything else through untouched.
+    template<typename T>
+    static auto _fmt_arg(const T& v) {
+        if constexpr (std::is_same_v<std::decay_t<T>, wxString>)
+            return v.m_s.c_str();
+        else if constexpr (std::is_same_v<std::decay_t<T>, std::string>)
+            return v.c_str();
+        else
+            return v;
+    }
+
+    static wxString _fmt_impl(const char* fmt, ...) {
         char buf[512];
         std::va_list ap;
         va_start(ap, fmt);
@@ -58,6 +70,16 @@ public:
         return wxString(std::move(out));
     }
 
+public:
+    // Variadic-template Format: safe for wxString/std::string args
+    // (unlike `...`, which is UB for non-trivial types).
+    template<typename... Args>
+    static wxString Format(const char* fmt, Args&&... args) {
+        return _fmt_impl(fmt, _fmt_arg(std::forward<Args>(args))...);
+    }
+    // No-arg overload so plain literals still work.
+    static wxString Format(const char* fmt) { return wxString(fmt); }
+
     // Basic queries.
     bool IsEmpty() const { return m_s.empty(); }
     bool empty()   const { return m_s.empty(); }
@@ -73,6 +95,9 @@ public:
     const char* utf8_str() const { return m_s.c_str(); }
     std::string ToStdString() const { return m_s; }
     operator const std::string&() const { return m_s; }
+    // Convert to const char* implicitly — KiCad code passes wxString to
+    // API expecting a plain C string.
+    operator const char*() const { return m_s.c_str(); }
 
     // Trivial to-number.
     bool ToCDouble(double* out) const {
@@ -137,6 +162,13 @@ public:
 
     char operator[](size_t i) const { return m_s[i]; }
     char Last() const { return m_s.empty() ? '\0' : m_s.back(); }
+    wxString& RemoveLast(size_t n = 1) {
+        if (n >= m_s.size()) m_s.clear();
+        else                 m_s.resize(m_s.size() - n);
+        return *this;
+    }
+    void clear() { m_s.clear(); }
+    void Clear() { m_s.clear(); }
 
     // Equality.
     bool operator==(const wxString& r) const { return m_s == r.m_s; }
@@ -169,3 +201,6 @@ inline wxString wxEmptyString{};
 
 // wxLogWarning etc. reference wxLogLevelValues via wxString::Format;
 // nothing else required here.
+
+// Real wxWidgets pulls wxArrayString in transitively from wx/string.h.
+#include "wx/arrstr.h"

@@ -2,6 +2,12 @@
 // Discards all log output. Real WASM build routes to console.log later.
 #pragma once
 #include <cstdio>
+#include "wx/defs.h"
+#include "wx/debug.h"     // KiCad code assumes wxFAIL_MSG etc. via <wx/log.h>
+
+#ifndef wxLOG_COMPONENT
+#define wxLOG_COMPONENT "kicad-wasm"
+#endif
 
 // wxWidgets defines a whole taxonomy of logging levels.
 using wxLogLevel = unsigned int;
@@ -37,7 +43,7 @@ public:
     static wxLog* GetActiveTarget() { return nullptr; }
     static bool IsLevelEnabled(wxLogLevel, const char*) { return false; }
     static bool IsAllowedTraceMask(const char*) { return false; }
-    static void EnableLogging(bool) {}
+    static void EnableLogging(bool = true) {}
     static void FlushActive() {}
     virtual ~wxLog() = default;
 };
