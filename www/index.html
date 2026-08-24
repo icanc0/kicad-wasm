@@ -1,0 +1,61 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>kicad-wasm sexpr POC</title>
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; max-width: 720px; margin: 2em auto;
+         padding: 0 1em; color: #111; }
+  h1 { font-size: 1.2em; margin-bottom: 0.3em; }
+  .sub { color: #666; font-size: 0.9em; }
+  input[type=file] { margin: 1em 0; }
+  pre { background: #f6f6f6; padding: 0.8em; border-radius: 6px;
+        max-height: 40vh; overflow: auto; font-size: 12px; }
+  .num { color: #248; font-weight: 600; }
+  .err { color: #a11; }
+</style>
+
+<h1>kicad-wasm — sexpr POC</h1>
+<p class="sub">
+  Proof of life: real KiCad C++ s-expression parser compiled to
+  WebAssembly and running in your browser. Drop a
+  <code>.kicad_pcb</code> or <code>.kicad_sch</code> file below.
+</p>
+
+<input type="file" id="file" accept=".kicad_pcb,.kicad_sch,.kicad_pro">
+<div id="status" class="sub"></div>
+<pre id="out">// waiting for file…</pre>
+
+<script src="./sexpr.js"></script>
+<script>
+(async () => {
+  const status = document.getElementById('status');
+  const out = document.getElementById('out');
+
+  status.textContent = 'Loading WASM…';
+  const Module = await Module();       // MODULARIZE=1 exports `Module`
+  status.textContent = 'Ready. WASM binary loaded (' +
+                       Math.round(Module.HEAPU8.length / 1024) + ' KB heap).';
+
+  document.getElementById('file').addEventListener('change', async ev => {
+    const file = ev.target.files[0];
+    if (!file) return;
+    const text = await file.text();
+    status.textContent = 'Parsing ' + file.name + ' (' +
+                         file.size.toLocaleString() + ' bytes)…';
+    const t0 = performance.now();
+    const summary = Module.sexprSummary(text);
+    const dt = (performance.now() - t0).toFixed(1);
+    status.innerHTML = 'Parsed <span class="num">' + file.size.toLocaleString() +
+                       '</span> bytes in <span class="num">' + dt +
+                       '</span> ms.';
+    try {
+      const j = JSON.parse(summary);
+      out.textContent = JSON.stringify(j, null, 2);
+    } catch (e) {
+      out.textContent = summary;
+    }
+  });
+})().catch(e => {
+  document.getElementById('out').innerHTML =
+    '<span class="err">' + String(e) + '</span>';
+});
+</script>

@@ -1,0 +1,5 @@
+# emscripten build products (recommited from CI later)
+src/*/*.wasm.map
+src/*/*.o
+# node
+node_modules/
