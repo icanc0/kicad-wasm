@@ -159,6 +159,13 @@ public:
     wxString& operator+=(const char* r)     { m_s += r; return *this; }
     wxString& operator+=(char c)            { m_s += c; return *this; }
     wxString& Append(const wxString& r)     { m_s += r.m_s; return *this; }
+    // Stream-style concatenation, as wxString supports natively.
+    wxString& operator<<(const wxString& r) { m_s += r.m_s; return *this; }
+    wxString& operator<<(const char* r)     { m_s += r; return *this; }
+    wxString& operator<<(char c)            { m_s += c; return *this; }
+    wxString& operator<<(int i)             { m_s += std::to_string(i); return *this; }
+    wxString& operator<<(long i)            { m_s += std::to_string(i); return *this; }
+    wxString& operator<<(double d)          { m_s += std::to_string(d); return *this; }
 
     char operator[](size_t i) const { return m_s[i]; }
     char Last() const { return m_s.empty() ? '\0' : m_s.back(); }
@@ -178,9 +185,19 @@ public:
     bool operator!=(const char* r)     const { return !(*this == r); }
 
     // Iteration.
-    using const_iterator = std::string::const_iterator;
+    using const_iterator         = std::string::const_iterator;
+    using iterator               = std::string::iterator;
+    using const_reverse_iterator = std::string::const_reverse_iterator;
+    using reverse_iterator       = std::string::reverse_iterator;
+    using value_type             = char;
     const_iterator begin() const { return m_s.begin(); }
     const_iterator end()   const { return m_s.end(); }
+    iterator       begin()       { return m_s.begin(); }
+    iterator       end()         { return m_s.end();   }
+    const_reverse_iterator rbegin() const { return m_s.rbegin(); }
+    const_reverse_iterator rend()   const { return m_s.rend(); }
+    reverse_iterator       rbegin()       { return m_s.rbegin(); }
+    reverse_iterator       rend()         { return m_s.rend(); }
 
     // fn_str for older API — return the raw C string.
     const char* fn_str() const { return m_s.c_str(); }
