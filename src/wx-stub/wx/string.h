@@ -10,7 +10,7 @@
 #include <string_view>
 #include <utility>
 
-#include "wx/defs.h"
+#include "wx/defs.h"    // for wxUniChar
 
 #undef wxASCII_STR
 #define wxASCII_STR(x) wxString(x)
@@ -154,6 +154,19 @@ public:
     // Search + substring.
     size_t find(const wxString& s, size_t pos = 0) const { return m_s.find(s.m_s, pos); }
     size_t find(char c, size_t pos = 0) const { return m_s.find(c, pos); }
+    size_t find_first_of(const wxString& s, size_t pos = 0) const { return m_s.find_first_of(s.m_s, pos); }
+    size_t find_first_of(char c, size_t pos = 0) const { return m_s.find_first_of(c, pos); }
+    size_t find_last_of(const wxString& s, size_t pos = std::string::npos) const { return m_s.find_last_of(s.m_s, pos); }
+    void   reserve(size_t n) { m_s.reserve(n); }
+    void   resize(size_t n) { m_s.resize(n); }
+    void   resize(size_t n, char c) { m_s.resize(n, c); }
+    void   push_back(char c) { m_s.push_back(c); }
+    wxString& append(const wxString& s) { m_s += s.m_s; return *this; }
+    wxString& append(const char* s)     { m_s += s; return *this; }
+    wxString& append(const char* s, size_t n) { m_s.append(s, n); return *this; }
+    wxString& append(size_t n, char c)  { m_s.append(n, c); return *this; }
+    // wxUniChar append — real wx converts to UTF-8.
+    wxString& append(class wxUniChar u);
     static constexpr size_t npos = std::string::npos;
     wxString substr(size_t pos, size_t n = std::string::npos) const {
         return wxString(m_s.substr(pos, n));
@@ -278,6 +291,24 @@ inline wxString operator+(const char* a, const wxString& b) {
 
 // A few free-function helpers common in KiCad code.
 inline wxString wxEmptyString{};
+
+// Definition of wxUniChar append — needs wxUniChar which was forward
+// declared in defs.h. Encode as a single ASCII byte for ASCII values,
+// or as 4 bytes UTF-8 for anything else.
+inline wxString& wxString::append(class wxUniChar u) {
+    int v = int(u);
+    if (v < 0x80) {
+        m_s.push_back((char)v);
+    } else if (v < 0x800) {
+        m_s.push_back((char)(0xC0 | (v >> 6)));
+        m_s.push_back((char)(0x80 | (v & 0x3F)));
+    } else {
+        m_s.push_back((char)(0xE0 | (v >> 12)));
+        m_s.push_back((char)(0x80 | ((v >> 6) & 0x3F)));
+        m_s.push_back((char)(0x80 | (v & 0x3F)));
+    }
+    return *this;
+}
 
 // wxLogWarning etc. reference wxLogLevelValues via wxString::Format;
 // nothing else required here.

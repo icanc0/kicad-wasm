@@ -57,6 +57,7 @@ using wxAnyValueBuffer = void*;
 class wxAnyValueType {
 public:
     virtual ~wxAnyValueType() = default;
+    virtual bool ConvertValue(const wxAnyValueBuffer&, wxAnyValueType*, wxAnyValueBuffer&) const { return false; }
     template<typename T>
     bool CheckType() const {
         // Type identity is checked via typeid comparison in derived classes;
