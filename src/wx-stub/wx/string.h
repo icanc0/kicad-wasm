@@ -97,7 +97,16 @@ public:
     const char* c_str() const { return m_s.c_str(); }
     const char* mb_str() const { return m_s.c_str(); }
     const char* ToUTF8() const { return m_s.c_str(); }
-    const char* utf8_str() const { return m_s.c_str(); }
+    // Real wxWidgets returns a wxScopedCharBuffer; KiCad code does
+    // `.utf8_str().data()`. Return a small proxy that answers .data()
+    // AND converts implicitly to const char*.
+    struct Utf8Proxy {
+        std::string s;
+        const char* data() const { return s.c_str(); }
+        operator const char*() const { return s.c_str(); }
+        size_t length() const { return s.size(); }
+    };
+    Utf8Proxy utf8_str() const { return Utf8Proxy{m_s}; }
     std::string ToStdString() const { return m_s; }
     operator const std::string&() const { return m_s; }
     // Convert to const char* implicitly — KiCad code passes wxString to

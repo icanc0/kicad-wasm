@@ -35,4 +35,5 @@ public:
     wxString GetString() const { try { return std::any_cast<wxString>(m_val); } catch (...) { return {}; } }
 
     bool IsNull() const { return !m_val.has_value(); }
+    wxVariantData* GetData() const { return nullptr; }
 };
