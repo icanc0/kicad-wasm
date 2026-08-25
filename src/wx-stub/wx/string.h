@@ -21,6 +21,11 @@ public:
 
     wxString() = default;
     wxString(const char* s) : m_s(s ? s : "") {}
+    // Two-arg (data, wxMBConv) form — the conv is ignored; we're char-only.
+    template<typename Conv>
+    wxString(const char* s, const Conv&) : m_s(s ? s : "") {}
+    template<typename Conv>
+    wxString(const char* s, const Conv&, size_t n) : m_s(s ? std::string(s, n) : "") {}
     wxString(const std::string& s) : m_s(s) {}
     wxString(std::string&& s) : m_s(std::move(s)) {}
     wxString(const wxString&) = default;
